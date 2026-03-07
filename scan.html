@@ -53,9 +53,19 @@
     .btn-back { display: flex; align-items: center; justify-content: center; width: 85% !important; margin: auto auto 25px auto; padding: 16px !important; font-size: 15px !important; font-weight: 700; border-radius: 50px; background-color: transparent; color: #64748b !important; text-decoration: none; transition: 0.2s; cursor: pointer; border: none;}
 
     /* [จุดปรับแต่ง 5] กล้องวิดีโอ & Canvas (Sci-Fi Box) */
-    .video-container { position: relative; width: 92%; aspect-ratio: 3/4; margin: 15px auto; border-radius: 20px; overflow: hidden; background: #000; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; border: 4px solid #fff; }
-    video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); opacity: 0; transition: opacity 0.5s; z-index: 1; }
-    video.active { opacity: 1; }
+    .video-container { 
+      position: relative; 
+      width: 90%; 
+      max-width: 280px; /* 👇 ปรับตัวเลขตรงนี้ได้ครับ (ยิ่งน้อย กรอบยิ่งเล็ก แนะนำ 280px - 300px) */
+      aspect-ratio: 3/4; 
+      margin: 15px auto; 
+      border-radius: 20px; 
+      overflow: hidden; 
+      background: #000; 
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
+      display: none; 
+      border: 4px solid #fff; 
+    }
     
     /* [เพิ่มใหม่] เลเยอร์วาดกราฟิกทับกล้อง */
     canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: scaleX(-1); z-index: 5; pointer-events: none; }
