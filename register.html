@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    /* =========================================
+       [จุดปรับแต่ง 1] ตั้งค่าพื้นฐาน (Native App Reset)
+       ========================================= */
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent; /* เอาไฮไลท์สีฟ้าเวลากดปุ่มออก */
+    }
+
+    body {
+      font-family: 'Noto Sans Thai', sans-serif;
+      margin: 0; padding: 0;
+      background: #0C3175; /* สีพื้นหลังด้านนอกสุด (กรณีเปิดจอคอมจะเห็นสีนี้) */
+      display: flex; justify-content: center;
+      min-height: 100vh;
+      user-select: none; /* ป้องกันการกดค้างแล้วคลุมดำข้อความแบบเว็บทั่วไป */
+    }
+
+    /* =========================================
+       [จุดปรับแต่ง 2] กล่องเนื้อหาหลัก (Container)
+       ========================================= */
+    .container {
+      width: 100%; 
+      max-width: 500px; /* ความกว้างจำลองหน้าจอมือถือ (แนะนำ 400-500px) */
+      background: white; /* สีพื้นหลังหน้าแอป */
+      padding: 30px 25px; /* ระยะขอบด้านใน */
+      display: flex; 
+      flex-direction: column;
+      min-height: 100vh; /* ให้กล่องยาวเต็มจอแนวตั้งเสมอ */
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+
+    h2 { font-size: 24px; margin-top: 10px; margin-bottom: 20px; color: #333; text-align: center; }
+
+    /* =========================================
+       [จุดปรับแต่ง 3] กรอบกล้องวิดีโอ (สไตล์ Profile Picture)
+       ========================================= */
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 280px; /* ขนาดความกว้างของกล้องสแกนหน้า */
+      aspect-ratio: 1 / 1; /* บังคับให้เป็นสัดส่วน 1:1 จัตุรัสเสมอ */
+      background: #f0f0f0;
+      border-radius: 50%; /* 50% = วงกลม | ถ้าอยากได้กรอบสี่เหลี่ยมมนๆ ให้แก้เป็น 20px */
+      overflow: hidden;
+      margin: 0 auto 25px auto; 
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      border: 5px solid #e0e0e0; /* สีและความหนาของขอบกล้อง */
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    video {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1); /* กลับซ้ายขวาให้เหมือนกระจกเงา */
+      display: none; 
+    }
+
+    .camera-placeholder { font-size: 80px; color: #ccc; }
+
+    /* =========================================
+       [จุดปรับแต่ง 4] Overlay ตอนนับถอยหลัง
+       ========================================= */
+    .scan-overlay {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.6); 
+      display: none; 
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      backdrop-filter: blur(3px);
+    }
+    
+    .overlay-text {
+      color: white; font-size: 16px; font-weight: bold;
+      text-align: center; margin-bottom: 10px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .countdown-number {
+      color: #fff; font-size: 80px; font-weight: 800;
+      text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      animation: popIn 0.5s ease;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.5); opacity: 0; }
+      80% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+
+    /* =========================================
+       [จุดปรับแต่ง 5] ฟอร์มกรอกข้อมูล (Input)
+       ========================================= */
+    .form-group { text-align: left; margin-bottom: 15px; }
+    label { font-size: 14px; color: #555; display: block; margin-bottom: 6px; font-weight: 600; }
+    
+    input {
+      width: 100%; 
+      padding: 15px; /* ความหนาของช่องกรอก */
+      border: 2px solid #ddd; 
+      border-radius: 12px; /* ความโค้งมนของช่องกรอก */
+      font-size: 16px; /* บังคับ 16px ป้องกันระบบ iOS ซูมหน้าจออัตโนมัติ */
+      font-family: 'Noto Sans Thai', sans-serif;
+      background: #fafafa; 
+      transition: all 0.3s ease;
+      user-select: text; /* อนุญาตให้ผู้ใช้จิ้มเลือกข้อความในช่องพิมพ์ได้ */
+    }
+    input:focus { border-color: #0C3175; outline: none; background: #fff; box-shadow: 0 0 0 3px rgba(12, 49, 117, 0.1); } 
+
+    /* =========================================
+       [จุดปรับแต่ง 6] ปุ่มกด (Buttons & Alerts)
+       ========================================= */
+    button {
+      width: 100%; 
+      padding: 18px; /* พื้นที่ปุ่มกว้างขึ้นให้กดง่ายบนมือถือ */
+      font-size: 18px; 
+      font-weight: 700;
+      background: #0C3175; /* สีพื้นหลังของปุ่ม */
+      color: white; /* สีตัวอักษรของปุ่ม */
+      border: none; 
+      border-radius: 50px; /* ความโค้งของปุ่ม */
+      cursor: pointer; 
+      margin-top: 15px;
+      box-shadow: 0 6px 15px rgba(12, 49, 117, 0.25);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    button:active { transform: scale(0.97); box-shadow: 0 2px 8px rgba(12, 49, 117, 0.15); } /* เอฟเฟกต์ตอนจิ้มปุ่ม */
+    button:disabled { background: #cbd5e1; box-shadow: none; cursor: not-allowed; color: #64748b; }
+
+    #msg {
+      margin-top: 20px; font-size: 14px;
+      padding: 12px; border-radius: 10px;
+      background: #f1f5f9; text-align: center; color: #475569; font-weight: 600;
+    }
+
+    .btn-back {
+      display: block; width: 100%; text-align: center;
+      margin-top: auto; padding: 20px 0 10px 0;
+      background-color: transparent; color: #94a3b8;
+      text-decoration: none; font-size: 15px; font-weight: 600; cursor: pointer; border: none;
+    }
+    .btn-back:active { color: #475569; }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>📝 ลงทะเบียนพนักงานใหม่</h2>
+
+    <div class="video-wrapper">
+      <div id="cameraPlaceholder" class="camera-placeholder">📷</div>
+      <video id="video" autoplay muted playsinline></video>
+      
+      <div id="scanOverlay" class="scan-overlay">
+        <div class="overlay-text">กรุณาเตรียมตัวสแกนใบหน้า...<br>มองตรงไปที่กล้องแล้วยิ้มเล็กน้อย</div>
+        <div id="countdownNum" class="countdown-number"></div>
+      </div>
+    </div>
+
+    <div style="flex: 1; overflow-y: auto; padding-bottom: 20px;">
+      <div class="form-group">
+        <label>รหัสพนักงาน (ID)</label>
+        <input type="text" id="employeeId" placeholder="ระบุรหัสพนักงาน" inputmode="numeric">
+      </div>
+
+      <div class="form-group">
+        <label>ชื่อ-นามสกุล</label>
+        <input type="text" id="username" placeholder="ระบุชื่อจริง">
+      </div>
+
+      <div class="form-group">
+        <label>ตำแหน่ง</label>
+        <input type="text" id="position" list="positionList" placeholder="เลือกหรือพิมพ์ตำแหน่ง">
+        <datalist id="positionList">
+          <option value="HOM."><option value="Admin."><option value="GSA."><option value="HK.">
+          <option value="Senior Maintenance"><option value="Maintenance."><option value="Security Guard">
+        </datalist>
+      </div>
+
+      <div class="form-group">
+        <label>แผนก</label>
+        <input type="text" id="department" list="deptList" placeholder="เลือกหรือพิมพ์แผนก">
+        <datalist id="deptList">
+          <option value="HOM."><option value="Admin."><option value="Front."><option value="HK.">
+          <option value="Maintenance."><option value="Security Guard">
+        </datalist>
+      </div>
+
+      <div class="form-group">
+        <label>เบอร์โทรศัพท์</label>
+        <input type="tel" id="phone" placeholder="08xxxxxxxx">
+      </div>
+
+      <button id="btnSave" onclick="validateAndStartProcess()">📸 เปิดกล้อง และ เริ่มสแกนใบหน้า</button>
+
+      <div id="msg">✅ กรุณากรอกข้อมูลให้ครบก่อนสแกน</div>
+    </div>
+
+    <button class="btn-back" onclick="goBack()">← กลับหน้าเมนูหลัก</button>
+  </div>
+
+  <script>
+    // =========================================================
+    // [อัปเกรด] การตั้งค่าระบบ API (เหมือนหน้าสแกนเข้างานเป๊ะ)
+    // =========================================================
+    const SECRET_KEY = "N1u3@THA_K07e03y2026";  // ⚠️ ต้องตรงกับในไฟล์ GAS
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzmBTCn3uZ6Ewj8zeunNgpKu30gCSd7vAlDcYApLGR5tKirOpM_w82xEf6_yHt_lXvfIQ/exec";  // ⚠️ ลิงก์ Web App
+    const MAIN_MENU_URL = "https://script.google.com/macros/s/AKfycbzmBTCn3uZ6Ewj8zeunNgpKu30gCSd7vAlDcYApLGR5tKirOpM_w82xEf6_yHt_lXvfIQ/exec";  // ⚠️ ลิงก์ตอนกดย้อนกลับ
+
+    // ฟังก์ชันยิง API ไปหา GAS แทน google.script.run
+    async function callGAS(actionName, payloadData = {}) {
+      try {
+        const response = await fetch(GAS_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ secretKey: SECRET_KEY, action: actionName, payload: payloadData })
+        });
+        const result = await response.json();
+        if (result.status === "error") throw new Error(result.message);
+        return result.data;
+      } catch (e) { throw e; }
+    }
+
+    function goBack() { 
+        stopCamera();
+        window.location.href = MAIN_MENU_URL; 
+    }
+
+    /* =========================================================
+       ระบบ VOICE AI
+       ========================================================= */
+    function speak(text) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel(); 
+        const msg = new SpeechSynthesisUtterance(text);
+        msg.lang = 'th-TH'; 
+        msg.rate = 1.0;    
+        msg.pitch = 1.0;    
+        window.speechSynthesis.speak(msg);
+      }
+    }
+
+    /* =========================================================
+       LOGIC การทำงานหลัก (ฉบับอัปเกรดความเสถียร)
+       ========================================================= */
+    const video = document.getElementById('video');
+    const btnSave = document.getElementById('btnSave');
+    const msgDiv = document.getElementById('msg');
+    const cameraPlaceholder = document.getElementById('cameraPlaceholder');
+    const scanOverlay = document.getElementById('scanOverlay');
+    const countdownNum = document.getElementById('countdownNum');
+    
+    let modelsLoaded = false;
+    let globalUserData = null; // เก็บข้อมูลผู้ใช้ชั่วคราว
+
+    function stopCamera() {
+      if (video && video.srcObject) {
+        const tracks = video.srcObject.getTracks();
+        tracks.forEach(track => track.stop());
+        video.srcObject = null;
+      }
+    }
+
+    window.addEventListener('beforeunload', stopCamera);
+
+    window.addEventListener('load', () => {
+      speak("ระบบพร้อมแล้วค่ะ กรุณากรอกข้อมูลพนักงานให้ครบถ้วนก่อนเริ่มสแกนใบหน้านะคะ"); 
+      // สังเกตว่าเรา 'ไม่โหลด' โมเดล AI ตรงนี้แล้ว เพื่อให้หน้าเว็บเบาและโหลดเสร็จไวที่สุด
+    });
+
+    // 🔴 [อัปเกรด] 1. ตรวจข้อมูล -> 2. โหลด AI -> 3. เปิดกล้อง (ลดโอกาสแอปค้าง)
+    async function validateAndStartProcess() {
+      // 1. เก็บข้อมูลผู้ใช้
+      globalUserData = {
+        id: document.getElementById('employeeId').value.trim(),
+        name: document.getElementById('username').value.trim(),
+        pos: document.getElementById('position').value.trim(),
+        dept: document.getElementById('department').value.trim(),
+        phone: document.getElementById('phone').value.trim()
+      };
+
+      if (!globalUserData.id || !globalUserData.name || !globalUserData.pos || !globalUserData.dept) {
+        speak("กรุณากรอกข้อมูลให้ครบถ้วนก่อนเริ่มสแกนใบหน้าค่ะ"); 
+        Swal.fire({ icon: 'warning', title: 'ข้อมูลไม่ครบ', text: 'กรุณากรอกข้อมูลสำคัญให้ครบถ้วน' });
+        return;
+      }
+
+      btnSave.disabled = true;
+      
+      // 2. โหลด AI Models (เปลี่ยนใช้ CDN เสถียร 100%)
+      if (!modelsLoaded) {
+          btnSave.innerText = "⏳ กำลังโหลดสมองกล AI...";
+          msgDiv.innerText = "กำลังดาวน์โหลดไฟล์ AI กรุณารอสักครู่...";
+          msgDiv.style.color = "#0C3175";
+          
+          const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+          try {
+            await Promise.all([
+              faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+              faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+              faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+            ]);
+            modelsLoaded = true;
+          } catch (err) {
+            btnSave.disabled = false;
+            btnSave.innerText = "📸 ลองใหม่อีกครั้ง";
+            msgDiv.innerText = "❌ โหลด AI ไม่สำเร็จ โปรดเช็คอินเทอร์เน็ต"; 
+            msgDiv.style.color = "#dc2626";
+            return;
+          }
+      }
+
+      // 3. เริ่มขอกล้องทันทีที่โหลดเสร็จ
+      btnSave.innerText = "⏳ กำลังเปิดกล้อง...";
+      msgDiv.innerText = "รอระบบกล้องพร้อมทำงาน...";
+      
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+        video.srcObject = stream;
+        
+        video.onloadedmetadata = () => {
+          video.play().then(() => {
+              cameraPlaceholder.style.display = 'none'; 
+              video.style.display = 'block'; 
+              startCountdown();
+          }).catch(e => {
+              console.error(e);
+              btnSave.innerText = "กดอีกครั้งเพื่อเริ่ม";
+              btnSave.disabled = false;
+          });
+        };
+      } catch (err) {
+        stopCamera(); 
+        speak("ไม่สามารถเปิดกล้องได้ค่ะ");
+        Swal.fire({ icon: 'error', title: 'เปิดกล้องไม่ได้', text: 'โปรดอนุญาตการใช้กล้อง ('+err.name+')' });
+        btnSave.disabled = false;
+        btnSave.innerText = "📸 ลองขอกล้องใหม่อีกครั้ง";
+        msgDiv.innerText = "❌ ไม่สามารถเข้าถึงกล้องได้";
+      }
+    }
+
+    function startCountdown() {
+      scanOverlay.style.display = 'flex'; 
+      let count = 3;
+      msgDiv.innerText = "👁️ กรุณาเตรียมตัว...";
+      countdownNum.innerText = count;
+
+      speak("กรูณาเตรียมตัวสแกนใบหน้าค่ะ"); 
+
+      const timer = setInterval(() => {
+        if (count > 0) {
+           countdownNum.innerText = count;
+           playBeep(0.05, 600); 
+           count--;
+        } else {
+           clearInterval(timer);
+           scanOverlay.style.display = 'none'; 
+           detectAndSave(); 
+        }
+      }, 1000); 
+    }
+
+    async function detectAndSave() {
+      msgDiv.innerText = "⚙️ กำลังวิเคราะห์โครงหน้า...";
+      
+      // ให้เวลากล้องปรับแสง 500ms ก่อนแชะภาพ
+      await new Promise(r => setTimeout(r, 500));
+
+      const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+
+      if (detection) {
+        msgDiv.innerText = "💾 กำลังบันทึกข้อมูลลงฐานข้อมูล...";
+        
+        playBeep(0.1, 880);
+        setTimeout(() => { speak("บันทึกข้อมูลพนักงานใหม่ เรียบร้อยแล้วค่ะ"); }, 300); 
+
+        const singleDescriptor = Array.from(detection.descriptor);
+        video.pause(); 
+        stopCamera(); // ปิดกล้องทันทีที่ได้หน้าแล้ว เพื่อประหยัดแบต
+
+        // 🔴 [อัปเกรด] ยิงข้อมูลขึ้น GAS ผ่าน API (ทำงานได้แม้อยู่บน Github)
+        try {
+            await callGAS('registerUser', { userData: globalUserData, descriptor: singleDescriptor });
+            Swal.fire({
+                icon: 'success', title: 'ลงทะเบียนสำเร็จ!',
+                text: 'ระบบบันทึกข้อมูลของคุณเรียบร้อยแล้ว',
+                timer: 3000, showConfirmButton: false
+            }).then(() => { window.location.href = MAIN_MENU_URL; });
+        } catch(error) {
+            msgDiv.innerText = "❌ บันทึกไม่สำเร็จ: " + error.message;
+            btnSave.disabled = false;
+            btnSave.innerText = "📸 สแกนใหม่อีกครั้ง";
+            Swal.fire({ icon: 'error', title: 'ฐานข้อมูลขัดข้อง', text: error.message });
+        }
+
+      } else {
+        speak("ไม่พบใบหน้า กรุณาขยับหน้าให้อยู่ตรงกลางกรอบ แล้วลองใหม่ค่ะ"); 
+        Swal.fire({
+            icon: 'error', title: 'ไม่พบใบหน้า',
+            text: 'กรุณาขยับใบหน้าให้อยู่ตรงกลางกรอบ แสงสว่างเพียงพอ แล้วลองใหม่อีกครั้ง',
+            confirmButtonText: 'ลองใหม่'
+        }).then(() => {
+             scanOverlay.style.display = 'none';
+             btnSave.disabled = false;
+             btnSave.innerText = "📸 กดเพื่อสแกนอีกครั้ง";
+             msgDiv.innerText = "❌ สแกนไม่ผ่าน ลองอีกครั้ง";
+             stopCamera(); // ปิดกล้องให้ผู้ใช้กดเริ่มใหม่แบบเคลียร์ๆ
+             cameraPlaceholder.style.display = 'flex';
+             video.style.display = 'none';
+        });
+      }
+    }
+
+    function playBeep(duration, freq) {
+      try {
+        const a = new (window.AudioContext || window.webkitAudioContext)();
+        const o = a.createOscillator(); const g = a.createGain();
+        o.connect(g); g.connect(a.destination);
+        o.frequency.value = freq; g.gain.value = 0.1;
+        o.start(); o.stop(a.currentTime + duration);
+      } catch (e) {}
+    }
+  </script>
+</body>
+</html>
