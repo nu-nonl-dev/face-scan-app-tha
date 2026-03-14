@@ -7,6 +7,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <style>
     /* =========================================
@@ -14,16 +15,16 @@
        ========================================= */
     * {
       box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent; /* เอาไฮไลท์สีฟ้าเวลากดปุ่มออก */
+      -webkit-tap-highlight-color: transparent; 
     }
 
     body {
       font-family: 'Noto Sans Thai', sans-serif;
       margin: 0; padding: 0;
-      background: #0C3175; /* สีพื้นหลังด้านนอกสุด (กรณีเปิดจอคอมจะเห็นสีนี้) */
+      background: #0C3175; 
       display: flex; justify-content: center;
       min-height: 100vh;
-      user-select: none; /* ป้องกันการกดค้างแล้วคลุมดำข้อความแบบเว็บทั่วไป */
+      user-select: none; 
     }
 
     /* =========================================
@@ -31,12 +32,12 @@
        ========================================= */
     .container {
       width: 100%; 
-      max-width: 500px; /* ความกว้างจำลองหน้าจอมือถือ (แนะนำ 400-500px) */
-      background: white; /* สีพื้นหลังหน้าแอป */
-      padding: 30px 25px; /* ระยะขอบด้านใน */
+      max-width: 500px; 
+      background: white; 
+      padding: 30px 25px; 
       display: flex; 
       flex-direction: column;
-      min-height: 100vh; /* ให้กล่องยาวเต็มจอแนวตั้งเสมอ */
+      min-height: 100vh; 
       box-shadow: 0 0 20px rgba(0,0,0,0.1);
     }
 
@@ -48,15 +49,14 @@
     .video-wrapper {
       position: relative;
       width: 100%;
-      max-width: 280px; /* ขนาดความกว้างของกล้องสแกนหน้า */
-      aspect-ratio: 1 / 1; /* บังคับให้เป็นสัดส่วน 1:1 จัตุรัสเสมอ */
+      max-width: 280px; 
+      aspect-ratio: 1 / 1; 
       background: #f0f0f0;
-      /* 👇 [ปรับแก้แล้ว] เปลี่ยนเป็น 20px เพื่อให้ได้กรอบสี่เหลี่ยมขอบมน */
-      border-radius: 20px; 
+      border-radius: 20px; /* กรอบสี่เหลี่ยมขอบมน */
       overflow: hidden;
       margin: 0 auto 25px auto; 
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-      border: 5px solid #e0e0e0; /* สีและความหนาของขอบกล้อง */
+      border: 5px solid #e0e0e0; 
       display: flex; align-items: center; justify-content: center;
     }
 
@@ -64,7 +64,7 @@
       position: absolute; top: 0; left: 0;
       width: 100%; height: 100%;
       object-fit: cover;
-      transform: scaleX(-1); /* กลับซ้ายขวาให้เหมือนกระจกเงา */
+      transform: scaleX(-1); 
       display: none; 
     }
 
@@ -104,6 +104,41 @@
     }
 
     /* =========================================
+       [เพิ่มใหม่] หน้าจอสำเร็จ (Success Screen)
+       ========================================= */
+    .success-visual {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.9); 
+      border-radius: 20px; /* โค้งตามกรอบกล้อง */
+      display: none; 
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 15; 
+      color: #059669; 
+      font-weight: bold;
+      font-size: 16px;
+      animation: popInSuccess 0.6s ease-out; 
+      box-shadow: inset 0 0 15px rgba(5, 150, 105, 0.1);
+    }
+
+    .success-icon {
+      font-size: 90px; 
+      margin-bottom: 5px;
+      color: #059669;
+    }
+
+    @keyframes popInSuccess {
+      0% { transform: scale(0.3) rotate(-30deg); opacity: 0; }
+      70% { transform: scale(1.1) rotate(5deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    /* =========================================
        [จุดปรับแต่ง 5] ฟอร์มกรอกข้อมูล (Input)
        ========================================= */
     .form-group { text-align: left; margin-bottom: 15px; }
@@ -111,35 +146,61 @@
     
     input {
       width: 100%; 
-      padding: 15px; /* ความหนาของช่องกรอก */
+      padding: 15px; 
       border: 2px solid #ddd; 
-      border-radius: 12px; /* ความโค้งมนของช่องกรอก */
-      font-size: 16px; /* บังคับ 16px ป้องกันระบบ iOS ซูมหน้าจออัตโนมัติ */
+      border-radius: 12px; 
+      font-size: 16px; 
       font-family: 'Noto Sans Thai', sans-serif;
       background: #fafafa; 
       transition: all 0.3s ease;
-      user-select: text; /* อนุญาตให้ผู้ใช้จิ้มเลือกข้อความในช่องพิมพ์ได้ */
+      user-select: text; 
     }
     input:focus { border-color: #0C3175; outline: none; background: #fff; box-shadow: 0 0 0 3px rgba(12, 49, 117, 0.1); } 
+
+    /* =========================================
+       [เพิ่มใหม่] สัญลักษณ์เลื่อนลง (Scroll Indicator)
+       ========================================= */
+    .scroll-down-hint {
+      text-align: center;
+      color: #94a3b8; 
+      font-size: 20px;
+      margin: 5px 0 15px 0;
+      animation: bounce 1.5s infinite; 
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .scroll-down-hint span {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-8px); }
+      60% { transform: translateY(-4px); }
+    }
 
     /* =========================================
        [จุดปรับแต่ง 6] ปุ่มกด (Buttons & Alerts)
        ========================================= */
     button {
       width: 100%; 
-      padding: 18px; /* พื้นที่ปุ่มกว้างขึ้นให้กดง่ายบนมือถือ */
+      padding: 18px; 
       font-size: 18px; 
       font-weight: 700;
-      background: #0C3175; /* สีพื้นหลังของปุ่ม */
-      color: white; /* สีตัวอักษรของปุ่ม */
+      background: #0C3175; 
+      color: white; 
       border: none; 
-      border-radius: 50px; /* ความโค้งของปุ่ม */
+      border-radius: 50px; 
       cursor: pointer; 
-      margin-top: 15px;
+      margin-top: 5px;
       box-shadow: 0 6px 15px rgba(12, 49, 117, 0.25);
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    button:active { transform: scale(0.97); box-shadow: 0 2px 8px rgba(12, 49, 117, 0.15); } /* เอฟเฟกต์ตอนจิ้มปุ่ม */
+    button:active { transform: scale(0.97); box-shadow: 0 2px 8px rgba(12, 49, 117, 0.15); } 
     button:disabled { background: #cbd5e1; box-shadow: none; cursor: not-allowed; color: #64748b; }
 
     #msg {
@@ -169,6 +230,11 @@
       <div id="scanOverlay" class="scan-overlay">
         <div class="overlay-text">กรุณาเตรียมตัวสแกนใบหน้า...<br>มองตรงไปที่กล้องแล้วยิ้มเล็กน้อย</div>
         <div id="countdownNum" class="countdown-number"></div>
+      </div>
+
+      <div id="successVisual" class="success-visual">
+        <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <span>ลงทะเบียนสำเร็จ</span>
       </div>
     </div>
 
@@ -201,6 +267,11 @@
         </datalist>
       </div>
 
+      <div class="scroll-down-hint">
+        <i class="fa-solid fa-angles-down"></i>
+        <span>เลื่อนลงด้านล่าง</span>
+      </div>
+
       <div class="form-group">
         <label>เบอร์โทรศัพท์</label>
         <input type="tel" id="phone" placeholder="08xxxxxxxx">
@@ -216,13 +287,12 @@
 
   <script>
     // =========================================================
-    // [อัปเกรด] การตั้งค่าระบบ API (เหมือนหน้าสแกนเข้างานเป๊ะ)
+    // [อัปเกรด] การตั้งค่าระบบ API 
     // =========================================================
-    const SECRET_KEY = "N1u3@THA_K07e03y2026";  // ⚠️ ต้องตรงกับในไฟล์ GAS
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzmBTCn3uZ6Ewj8zeunNgpKu30gCSd7vAlDcYApLGR5tKirOpM_w82xEf6_yHt_lXvfIQ/exec";  // ⚠️ ลิงก์ Web App
-    const MAIN_MENU_URL = "https://script.google.com/macros/s/AKfycbzmBTCn3uZ6Ewj8zeunNgpKu30gCSd7vAlDcYApLGR5tKirOpM_w82xEf6_yHt_lXvfIQ/exec";  // ⚠️ ลิงก์ตอนกดย้อนกลับ
+    const SECRET_KEY = "N1u3@THA_K07e03y2026";  
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzmBTCn3uZ6Ewj8zeunNgpKu30gCSd7vAlDcYApLGR5tKirOpM_w82xEf6_yHt_lXvfIQ/exec";  
+    const MAIN_MENU_URL = "https://script.google.com/macros/s/AKfycbzmBTCn3uZ6Ewj8zeunNgpKu30gCSd7vAlDcYApLGR5tKirOpM_w82xEf6_yHt_lXvfIQ/exec";  
 
-    // ฟังก์ชันยิง API ไปหา GAS แทน google.script.run
     async function callGAS(actionName, payloadData = {}) {
       try {
         const response = await fetch(GAS_API_URL, {
@@ -256,7 +326,7 @@
     }
 
     /* =========================================================
-       LOGIC การทำงานหลัก (ฉบับอัปเกรดความเสถียร)
+       LOGIC การทำงานหลัก
        ========================================================= */
     const video = document.getElementById('video');
     const btnSave = document.getElementById('btnSave');
@@ -266,7 +336,7 @@
     const countdownNum = document.getElementById('countdownNum');
     
     let modelsLoaded = false;
-    let globalUserData = null; // เก็บข้อมูลผู้ใช้ชั่วคราว
+    let globalUserData = null; 
 
     function stopCamera() {
       if (video && video.srcObject) {
@@ -280,12 +350,9 @@
 
     window.addEventListener('load', () => {
       speak("ระบบพร้อมแล้วค่ะ กรุณากรอกข้อมูลพนักงานให้ครบถ้วนก่อนเริ่มสแกนใบหน้านะคะ"); 
-      // สังเกตว่าเรา 'ไม่โหลด' โมเดล AI ตรงนี้แล้ว เพื่อให้หน้าเว็บเบาและโหลดเสร็จไวที่สุด
     });
 
-    // 🔴 [อัปเกรด] 1. ตรวจข้อมูล -> 2. โหลด AI -> 3. เปิดกล้อง (ลดโอกาสแอปค้าง)
     async function validateAndStartProcess() {
-      // 1. เก็บข้อมูลผู้ใช้
       globalUserData = {
         id: document.getElementById('employeeId').value.trim(),
         name: document.getElementById('username').value.trim(),
@@ -302,7 +369,6 @@
 
       btnSave.disabled = true;
       
-      // 2. โหลด AI Models (เปลี่ยนใช้ CDN เสถียร 100%)
       if (!modelsLoaded) {
           btnSave.innerText = "⏳ กำลังโหลดสมองกล AI...";
           msgDiv.innerText = "กำลังดาวน์โหลดไฟล์ AI กรุณารอสักครู่...";
@@ -325,7 +391,6 @@
           }
       }
 
-      // 3. เริ่มขอกล้องทันทีที่โหลดเสร็จ
       btnSave.innerText = "⏳ กำลังเปิดกล้อง...";
       msgDiv.innerText = "รอระบบกล้องพร้อมทำงาน...";
       
@@ -378,7 +443,6 @@
     async function detectAndSave() {
       msgDiv.innerText = "⚙️ กำลังวิเคราะห์โครงหน้า...";
       
-      // ให้เวลากล้องปรับแสง 500ms ก่อนแชะภาพ
       await new Promise(r => setTimeout(r, 500));
 
       const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
@@ -389,11 +453,19 @@
         playBeep(0.1, 880);
         setTimeout(() => { speak("บันทึกข้อมูลพนักงานใหม่ เรียบร้อยแล้วค่ะ"); }, 300); 
 
-        const singleDescriptor = Array.from(detection.descriptor);
+        // แสดงหน้าจอสำเร็จในกรอบกล้อง
         video.pause(); 
-        stopCamera(); // ปิดกล้องทันทีที่ได้หน้าแล้ว เพื่อประหยัดแบต
+        video.style.display = 'none';
+        cameraPlaceholder.style.display = 'none';
+        scanOverlay.style.display = 'none';
 
-        // 🔴 [อัปเกรด] ยิงข้อมูลขึ้น GAS ผ่าน API (ทำงานได้แม้อยู่บน Github)
+        const successVisual = document.getElementById('successVisual');
+        successVisual.style.display = 'flex';
+
+        stopCamera(); 
+
+        const singleDescriptor = Array.from(detection.descriptor);
+
         try {
             await callGAS('registerUser', { userData: globalUserData, descriptor: singleDescriptor });
             Swal.fire({
@@ -406,6 +478,9 @@
             btnSave.disabled = false;
             btnSave.innerText = "📸 สแกนใหม่อีกครั้ง";
             Swal.fire({ icon: 'error', title: 'ฐานข้อมูลขัดข้อง', text: error.message });
+            
+            successVisual.style.display = 'none';
+            cameraPlaceholder.style.display = 'flex';
         }
 
       } else {
@@ -419,7 +494,7 @@
              btnSave.disabled = false;
              btnSave.innerText = "📸 กดเพื่อสแกนอีกครั้ง";
              msgDiv.innerText = "❌ สแกนไม่ผ่าน ลองอีกครั้ง";
-             stopCamera(); // ปิดกล้องให้ผู้ใช้กดเริ่มใหม่แบบเคลียร์ๆ
+             stopCamera(); 
              cameraPlaceholder.style.display = 'flex';
              video.style.display = 'none';
         });
