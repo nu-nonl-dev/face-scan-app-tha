@@ -63,7 +63,7 @@
     video {
       position: absolute; top: 0; left: 0;
       width: 100%; height: 100%;
-      object-fit: cover;
+      object-fit: cover; /* บังคับให้กล้องไม่เอียง ไม่ยืดเบี้ยว */
       transform: scaleX(-1); 
       display: none; 
     }
@@ -104,33 +104,26 @@
     }
 
     /* =========================================
-       [เพิ่มใหม่] หน้าจอสำเร็จ (Success Screen)
+       [เพิ่มใหม่] หน้าจอสำเร็จแบบให้ยืนยัน 
        ========================================= */
     .success-visual {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(255, 255, 255, 0.9); 
-      border-radius: 20px; /* โค้งตามกรอบกล้อง */
-      display: none; 
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 15; 
-      color: #059669; 
-      font-weight: bold;
-      font-size: 16px;
-      animation: popInSuccess 0.6s ease-out; 
-      box-shadow: inset 0 0 15px rgba(5, 150, 105, 0.1);
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255, 255, 255, 0.95); border-radius: 20px;
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 20; animation: popInSuccess 0.5s ease-out; padding: 10px;
     }
-
-    .success-icon {
-      font-size: 90px; 
-      margin-bottom: 5px;
-      color: #059669;
-    }
+    .match-label { font-size: 14px; font-weight: 700; color: #475569; margin-bottom: 0px;}
+    .match-percent { font-size: 60px; font-weight: 800; line-height: 1; margin-bottom: 10px; text-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    
+    .color-red { color: #dc2626; } 
+    .color-orange { color: #ea580c; } 
+    .color-green { color: #059669; }
+    
+    .btn-group-reg { display: flex; gap: 10px; width: 100%; justify-content: center; margin-top: 5px; }
+    .btn-small-confirm { background: #059669; color: white; border: none; padding: 10px 15px; border-radius: 50px; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 10px rgba(5,150,105,0.3); }
+    .btn-small-confirm:active { transform: scale(0.95); }
+    .btn-small-retry { background: #cbd5e1; color: #334155; border: none; padding: 10px 15px; border-radius: 50px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .btn-small-retry:active { transform: scale(0.95); }
 
     @keyframes popInSuccess {
       0% { transform: scale(0.3) rotate(-30deg); opacity: 0; }
@@ -233,8 +226,12 @@
       </div>
 
       <div id="successVisual" class="success-visual">
-        <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
-        <span>ลงทะเบียนสำเร็จ</span>
+        <div class="match-label">ความสมบูรณ์ของใบหน้า</div>
+        <div id="matchPercent" class="match-percent">0%</div>
+        <div class="btn-group-reg">
+          <button class="btn-small-confirm" id="btnConfirmReg" onclick="confirmRegistration()">✅ บันทึก</button>
+          <button class="btn-small-retry" id="btnRetryReg" onclick="retryRegistration()">📸 ถ่ายใหม่</button>
+        </div>
       </div>
     </div>
 
@@ -337,6 +334,7 @@
     
     let modelsLoaded = false;
     let globalUserData = null; 
+    let globalDescriptor = null; // ตัวแปรเก็บโครงหน้าชั่วคราว รอคนกดยืนยัน
 
     function stopCamera() {
       if (video && video.srcObject) {
@@ -444,44 +442,37 @@
       msgDiv.innerText = "⚙️ กำลังวิเคราะห์โครงหน้า...";
       
       await new Promise(r => setTimeout(r, 500));
-
-      const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+      
+      // บังคับความแม่นยำ AI 85% ป้องกันเอามือผ่านแล้วผ่าน
+      const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.85 });
+      const detection = await faceapi.detectSingleFace(video, options).withFaceLandmarks().withFaceDescriptor();
 
       if (detection) {
-        msgDiv.innerText = "💾 กำลังบันทึกข้อมูลลงฐานข้อมูล...";
-        
         playBeep(0.1, 880);
-        setTimeout(() => { speak("บันทึกข้อมูลพนักงานใหม่ เรียบร้อยแล้วค่ะ"); }, 300); 
-
-        // แสดงหน้าจอสำเร็จในกรอบกล้อง
         video.pause(); 
+        
+        // คำนวณความสมบูรณ์ของใบหน้าจากคะแนน Detection (Score 0.0 - 1.0)
+        let faceScore = Math.round(detection.detection.score * 100);
+        let colorClass = "color-red";
+        if (faceScore >= 90) colorClass = "color-green"; // เกณฑ์ลงทะเบียนควรจะสูง
+        else if (faceScore >= 80) colorClass = "color-orange";
+
+        const successVisual = document.getElementById('successVisual');
+        const matchPercentEl = document.getElementById('matchPercent');
+        
+        matchPercentEl.innerText = faceScore + "%";
+        matchPercentEl.className = "match-percent " + colorClass;
+
         video.style.display = 'none';
         cameraPlaceholder.style.display = 'none';
         scanOverlay.style.display = 'none';
-
-        const successVisual = document.getElementById('successVisual');
         successVisual.style.display = 'flex';
 
-        stopCamera(); 
-
-        const singleDescriptor = Array.from(detection.descriptor);
-
-        try {
-            await callGAS('registerUser', { userData: globalUserData, descriptor: singleDescriptor });
-            Swal.fire({
-                icon: 'success', title: 'ลงทะเบียนสำเร็จ!',
-                text: 'ระบบบันทึกข้อมูลของคุณเรียบร้อยแล้ว',
-                timer: 3000, showConfirmButton: false
-            }).then(() => { window.location.href = MAIN_MENU_URL; });
-        } catch(error) {
-            msgDiv.innerText = "❌ บันทึกไม่สำเร็จ: " + error.message;
-            btnSave.disabled = false;
-            btnSave.innerText = "📸 สแกนใหม่อีกครั้ง";
-            Swal.fire({ icon: 'error', title: 'ฐานข้อมูลขัดข้อง', text: error.message });
-            
-            successVisual.style.display = 'none';
-            cameraPlaceholder.style.display = 'flex';
-        }
+        // เก็บข้อมูลไว้รอให้ User กดยืนยัน
+        globalDescriptor = Array.from(detection.descriptor);
+        
+        msgDiv.innerText = "✅ ตรวจสอบความชัดเจน หากพอใจกดยืนยันได้เลย";
+        speak("ตรวจสอบความคมชัด หากพอใจกดยืนยันได้เลยค่ะ"); 
 
       } else {
         speak("ไม่พบใบหน้า กรุณาขยับหน้าให้อยู่ตรงกลางกรอบ แล้วลองใหม่ค่ะ"); 
@@ -499,6 +490,46 @@
              video.style.display = 'none';
         });
       }
+    }
+
+    // เมื่อ User กดปุ่ม "✅ บันทึก"
+    async function confirmRegistration() {
+        document.getElementById('btnConfirmReg').innerText = "⏳ รอสักครู่...";
+        document.getElementById('btnConfirmReg').disabled = true;
+        document.getElementById('btnRetryReg').disabled = true;
+        msgDiv.innerText = "💾 กำลังบันทึกข้อมูลลงฐานข้อมูล...";
+        
+        stopCamera(); // ปิดกล้องเพื่อประหยัดแบต
+
+        try {
+            await callGAS('registerUser', { userData: globalUserData, descriptor: globalDescriptor });
+            Swal.fire({
+                icon: 'success', title: 'ลงทะเบียนสำเร็จ!',
+                text: 'ระบบบันทึกข้อมูลของคุณเรียบร้อยแล้ว',
+                timer: 3000, showConfirmButton: false
+            }).then(() => { window.location.href = MAIN_MENU_URL; });
+        } catch(error) {
+            msgDiv.innerText = "❌ บันทึกไม่สำเร็จ: " + error.message;
+            document.getElementById('successVisual').style.display = 'none';
+            cameraPlaceholder.style.display = 'flex';
+            btnSave.disabled = false;
+            btnSave.innerText = "📸 สแกนใหม่อีกครั้ง";
+            Swal.fire({ icon: 'error', title: 'ฐานข้อมูลขัดข้อง', text: error.message });
+            
+            // คืนค่าปุ่มให้กดใหม่ได้
+            document.getElementById('btnConfirmReg').innerText = "✅ บันทึก";
+            document.getElementById('btnConfirmReg').disabled = false;
+            document.getElementById('btnRetryReg').disabled = false;
+        }
+    }
+
+    // เมื่อ User กดปุ่ม "📸 ถ่ายใหม่"
+    function retryRegistration() {
+        globalDescriptor = null;
+        document.getElementById('successVisual').style.display = 'none';
+        video.style.display = 'block';
+        video.play();
+        startCountdown(); // ให้นับถอยหลังถ่ายใหม่ทันที
     }
 
     function playBeep(duration, freq) {
