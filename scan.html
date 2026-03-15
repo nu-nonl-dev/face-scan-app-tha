@@ -68,39 +68,27 @@
     }
     video { object-fit: cover; width: 100%; height: 100%; transform: scaleX(-1); position: absolute; top: 0; left: 0;}
     
-    /* [ปรับแต่งใหม่] คลาสสำหรับ Canvas เพื่อให้กรอบกระพริบอย่างสวยงาม */
     canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: scaleX(-1); z-index: 5; pointer-events: none; }
-    .scifi-blink {
-      animation: scifiPulse 0.6s infinite alternate; /* ความเร็วปานกลาง 0.6 วินาทีสลับไปมา */
-    }
-    @keyframes scifiPulse {
-      0% { opacity: 0.3; }
-      100% { opacity: 1; filter: drop-shadow(0 0 5px rgba(0,255,204,0.8)); }
-    }
+    .scifi-blink { animation: scifiPulse 0.6s infinite alternate; }
+    @keyframes scifiPulse { 0% { opacity: 0.3; } 100% { opacity: 1; filter: drop-shadow(0 0 5px rgba(0,255,204,0.8)); } }
     
     #overlay-status { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); color: white; padding: 10px 25px; border-radius: 30px; z-index: 10; font-size: 15px; font-weight: 600; width: max-content; }
 
     /* [จุดปรับแต่ง 6] เลเยอร์แสดง % ความสำเร็จ */
     .success-visual {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(255, 255, 255, 0.95);
+      background: rgba(255, 255, 255, 0.85); /* 🔴 ปรับโปร่งแสงเพื่อให้เห็นกรอบบนหน้าตาค้างไว้ */
       border-radius: 16px;
       display: none; flex-direction: column; align-items: center; justify-content: center;
       z-index: 20; animation: popInSuccess 0.5s ease-out;
     }
-    .match-label { font-size: 15px; font-weight: 700; color: #475569; margin-bottom: 5px;}
-    .match-percent { font-size: 65px; font-weight: 800; line-height: 1; margin-bottom: 10px; text-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    .match-desc { font-size: 14px; font-weight: 600; color: #64748b; }
+    .match-label { font-size: 15px; font-weight: 700; color: #475569; margin-bottom: 5px; text-shadow: 0 0 10px white; }
+    .match-percent { font-size: 70px; font-weight: 800; line-height: 1; margin-bottom: 10px; text-shadow: 0 2px 10px rgba(255,255,255,0.8); }
+    .match-desc { font-size: 14px; font-weight: 700; color: #1e293b; text-shadow: 0 0 5px white; }
     
-    .color-red { color: #dc2626; }
-    .color-orange { color: #ea580c; }
-    .color-green { color: #059669; }
+    .color-red { color: #dc2626; } .color-orange { color: #ea580c; } .color-green { color: #059669; }
 
-    @keyframes popInSuccess {
-      0% { transform: scale(0.5); opacity: 0; }
-      80% { transform: scale(1.1); opacity: 1; }
-      100% { transform: scale(1); opacity: 1; }
-    }
+    @keyframes popInSuccess { 0% { transform: scale(0.5); opacity: 0; } 80% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
   </style>
 </head>
 <body>
@@ -205,8 +193,7 @@
     let verifiedUser = { id: "", name: "", shiftStart: "", shiftEnd: "" };
     const SHIFT_MAPPING = { "07:00": "16:00", "08:00": "17:00", "09:00": "18:00", "10:00": "19:00", "14:00": "23:00", "19:00": "07:00", "22:30": "07:30" };
     
-    // ตั้งค่าความปลอดภัย AI
-    const MATCH_THRESHOLD = 0.50; 
+    const MATCH_THRESHOLD = 0.45; 
     const VOICE_TEXT = "คุณได้ทำการสแกนหน้าสำเร็จแล้วค่ะ";
     const GPS_VOICE_TEXT = "ระบบได้บันทึกข้อมูลพิกัด GPS ของคุณเรียบร้อยแล้วค่ะ";
 
@@ -320,27 +307,27 @@
       }
     }
 
-    // ==========================================
-    // [อัปเกรด] ปุ่มยืนยันข้อมูล + ระบบบล็อคสแกนซ้ำซ้อน
-    // ==========================================
     async function confirmIdentity() {
       if (currentMode === 'checkin') {
          verifiedUser.shiftStart = document.getElementById('shiftStart').value;
          verifiedUser.shiftEnd = document.getElementById('shiftEnd').value;
       }
 
-      // 1. เปลี่ยนหน้าตาปุ่มเป็นโหมดโหลดข้อมูล
       const btn = document.getElementById('btnVerify');
       const originalText = btn.innerHTML;
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังตรวจสอบประวัติ...';
       btn.disabled = true;
 
       try {
-         // 2. ยิง API ไปถาม Google Sheets ว่าวันนี้คนนี้สแกนหรือยัง?
-         const checkRes = await callGAS('checkDuplicateStatus', { id: verifiedUser.id, mode: currentMode });
+         // 🔴 [ส่งข้อมูลไปหา GAS เพิ่มเติม เพื่อให้คำนวณวันแม่นยำขึ้น]
+         const checkRes = await callGAS('checkDuplicateStatus', { 
+            id: verifiedUser.id, 
+            mode: currentMode, 
+            shiftStart: verifiedUser.shiftStart, 
+            shiftEnd: verifiedUser.shiftEnd 
+         });
          
          if (checkRes.hasScanned) {
-            // 🚫 กรณีที่เจอว่า "สแกนไปแล้ว" ให้เด้งเตือนและบล็อคการทำงาน!
             const actionText = currentMode === 'checkout' ? "เลิกงาน" : "เข้างาน";
             playSystemSound('error'); 
             
@@ -354,16 +341,14 @@
             
             btn.innerHTML = originalText;
             btn.disabled = false;
-            return; // 🛑 หยุดโค้ดตรงนี้เลย กล้องจะไม่เปิด
+            return; 
          }
       } catch(e) {
          console.error("เช็คประวัติซ้ำซ้อนล้มเหลว ลุยเปิดกล้องต่อได้เลย:", e);
       }
 
-      // ✅ กรณีที่ไม่เคยสแกน ให้เปิดระบบสแกนหน้าปกติ
       btn.innerHTML = originalText;
       btn.disabled = false;
-
       identityForm.style.display = 'none';
       actionArea.style.display = 'flex';
       initFaceSystem();
@@ -463,9 +448,6 @@
       });
     }
 
-    // ==========================================
-    // ฟังก์ชันวาดกรอบ Sci-Fi ที่สว่างและเท่ขึ้น
-    // ==========================================
     function drawSciFiBox(ctx, box) {
       ctx.strokeStyle = '#00ffcc'; ctx.lineWidth = 4; ctx.shadowColor = '#00ffcc'; ctx.shadowBlur = 15;
       const len = 30; 
@@ -496,61 +478,57 @@
       if (scanInterval) clearInterval(scanInterval);
       isProcessing = false;
       const ctx = canvas.getContext('2d');
-      // เพิ่มความมั่นใจ 85% ป้องกันเอามือผ่านแล้วติด
       const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.85 });
 
-      setTimeout(() => {
-        scanInterval = setInterval(async () => {
-          if (video.paused || video.ended || isProcessing) return;
-          
-          const displaySize = { width: video.clientWidth, height: video.clientHeight };
-          const detection = await faceapi.detectSingleFace(video, options).withFaceLandmarks().withFaceDescriptor();
-          
-          ctx.clearRect(0, 0, canvas.width, canvas.height); 
+      // 🔴 [จุดที่ปรับแก้] เอา delay ตอนเริ่มออก และ ปรับให้ทำงานเร็วขึ้นเป็น 200ms
+      scanInterval = setInterval(async () => {
+        if (video.paused || video.ended || isProcessing) return;
+        
+        const displaySize = { width: video.clientWidth, height: video.clientHeight };
+        const detection = await faceapi.detectSingleFace(video, options).withFaceLandmarks().withFaceDescriptor();
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height); 
 
-          if (detection) {
-            const resizedDetection = faceapi.resizeResults(detection, displaySize);
-            drawSciFiBox(ctx, resizedDetection.detection.box); 
+        if (detection) {
+          const resizedDetection = faceapi.resizeResults(detection, displaySize);
+          drawSciFiBox(ctx, resizedDetection.detection.box); 
 
-            overlayStatus.innerText = "⚙️ กำลังวิเคราะห์...";
-            let bestMatch = { name: 'unknown', distance: 1.0 };
-            knownFaces.forEach(user => {
-               if(user.descriptor) {
-                  const distance = faceapi.euclideanDistance(detection.descriptor, user.descriptor);
-                  if (distance < bestMatch.distance) bestMatch = { name: user.name, distance: distance };
-               }
-            });
+          overlayStatus.innerText = "⚙️ กำลังวิเคราะห์...";
+          let bestMatch = { name: 'unknown', distance: 1.0 };
+          knownFaces.forEach(user => {
+             if(user.descriptor) {
+                const distance = faceapi.euclideanDistance(detection.descriptor, user.descriptor);
+                if (distance < bestMatch.distance) bestMatch = { name: user.name, distance: distance };
+             }
+          });
 
-            if (bestMatch.distance < MATCH_THRESHOLD) {
-              if (isProcessing) return; isProcessing = true;
-              clearInterval(scanInterval); video.pause();
-              
-              let matchScore = Math.max(0, Math.round((1 - bestMatch.distance) * 100));
-              let colorClass = "color-red";
-              if (matchScore >= 71) colorClass = "color-green";
-              else if (matchScore >= 41) colorClass = "color-orange";
+          if (bestMatch.distance < MATCH_THRESHOLD) {
+            if (isProcessing) return; isProcessing = true;
+            clearInterval(scanInterval); video.pause(); // 🔴 ล็อคเฟรมวิดีโอค้างไว้
+            
+            let matchScore = Math.max(0, Math.round((1 - bestMatch.distance) * 100));
+            let colorClass = "color-red";
+            if (matchScore >= 71) colorClass = "color-green";
+            else if (matchScore >= 41) colorClass = "color-orange";
 
-              const successVisual = document.getElementById('successVisual');
-              const matchPercentEl = document.getElementById('matchPercent');
-              
-              matchPercentEl.innerText = matchScore + "%";
-              matchPercentEl.className = "match-percent " + colorClass; 
-              
-              video.style.display = 'none';
-              canvas.style.display = 'none';
-              overlayStatus.style.display = 'none';
-              successVisual.style.display = 'flex'; 
-              
-              playSystemSound('success'); 
-              setTimeout(() => { playVoiceNotification(VOICE_TEXT); }, 400);
-              
-              // หน่วงเวลา 2 วินาทีให้ User ดู % แล้วค่อยเซฟข้อมูล
-              setTimeout(() => { saveData("Face Scan"); }, 2000);
-              
-            } else { overlayStatus.innerText = "❌ ไม่พบใบหน้า (หรือค่าความแม่นยำต่ำไป)"; }
-          }
-        }, 300); 
-      }, 500); 
+            const successVisual = document.getElementById('successVisual');
+            const matchPercentEl = document.getElementById('matchPercent');
+            
+            matchPercentEl.innerText = matchScore + "%";
+            matchPercentEl.className = "match-percent " + colorClass; 
+            
+            overlayStatus.style.display = 'none';
+            // 🔴 [จุดที่ปรับแก้] ปล่อย Canvas (กรอบ) ไว้ไม่ต้องซ่อน และโชว์เปอร์เซ็นต์แบบโปร่งแสงทับไปเลย
+            successVisual.style.display = 'flex'; 
+            
+            playSystemSound('success'); 
+            setTimeout(() => { playVoiceNotification(VOICE_TEXT); }, 400);
+            
+            setTimeout(() => { saveData("Face Scan"); }, 2000);
+            
+          } else { overlayStatus.innerText = "❌ ไม่พบใบหน้า (หรือค่าความแม่นยำต่ำไป)"; }
+        }
+      }, 200); 
     }
 
     function useGPSFallback() {
@@ -580,7 +558,8 @@
 
       try {
         if (currentMode === 'checkout') {
-          await callGAS('logCheckOut', {name: user.name, lat: currentLat, lng: currentLng, method: method});
+          // 🔴 [ส่งข้อมูล Shift ไปพร้อมกับการบันทึกด้วย]
+          await callGAS('logCheckOut', {name: user.name, lat: currentLat, lng: currentLng, method: method, id: user.id, shiftStart: user.shiftStart, shiftEnd: user.shiftEnd});
           showSuccess("บันทึกเวลาเลิกงานแล้ว");
         } else {
           await callGAS('logAttendance', {name: user.name, lat: currentLat, lng: currentLng, id: user.id, shiftStart: user.shiftStart, shiftEnd: user.shiftEnd, method: method});
