@@ -26,7 +26,7 @@
     .gps-info { font-size: 13px; font-weight: 600; color: #888; margin: 5px 0 15px 0; }
     .gps-alert { background: #fff5f5; color: #dc3545; padding: 15px; border-radius: 15px; margin: 10px 20px; display: none; font-size: 14px; border: 1px solid #ffc1c1; box-shadow: 0 4px 10px rgba(220, 53, 69, 0.1); }
 
-    /* [จุดปรับแต่ง 4] ฟอร์ม และ ปุ่มกดต่างๆ */
+    /* [จุดปรับแต่ง 4] ฟอร์ม และ ปุ่มกดต่างๆ (อัปเกรดสีปุ่มทั้งหมดให้เป็น Gradient UI) */
     .identity-form, .action-area { background: white; width: 92%; margin: 0 auto 15px auto; padding: 25px 20px; border-radius: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.06); text-align: left; }
     .identity-form { display: none; }
     .action-area { display: none; flex-direction: column; gap: 15px; background: transparent; box-shadow: none; padding: 0; }
@@ -40,17 +40,56 @@
     .loading-pulse { color: #007bff; animation: pulse 1.5s infinite; font-weight: 600; }
     @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
-    .btn-get-loc { background: white; color: #007bff; border: 2px solid #007bff; padding: 12px 20px; border-radius: 50px; font-size: 14px; font-weight: 700; cursor: pointer; margin: 0 auto 15px auto; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
-    .btn-get-loc:active { transform: scale(0.96); background: #e6f2ff; }
-    .btn-verify { width: 100%; padding: 16px; background: #059669; color: white; border: none; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3); transition: 0.2s; }
-    .btn-verify:active { transform: scale(0.98); }
-    .btn-verify:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; color: #94a3b8;}
-    .btn-scan-face { width: 100%; padding: 16px; background: #2563eb; color: white; border: none; border-radius: 50px; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); transition: 0.2s;}
-    .btn-scan-face:active:not(:disabled) { transform: scale(0.97); }
-    .btn-gps-fallback { width: 100%; padding: 14px; background: white; color: #ea580c; border: 2px solid #ea580c; border-radius: 50px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s;}
-    .btn-gps-fallback:active:not(:disabled) { transform: scale(0.97); background: #fff7ed; }
-    .btn-scan-face:disabled, .btn-gps-fallback:disabled { background: #e2e8f0 !important; color: #94a3b8 !important; border-color: #e2e8f0 !important; box-shadow: none !important; cursor: not-allowed; }
-    .btn-back { display: flex; align-items: center; justify-content: center; width: 85% !important; margin: auto auto 25px auto; padding: 16px !important; font-size: 15px !important; font-weight: 700; border-radius: 50px; background-color: transparent; color: #64748b !important; text-decoration: none; transition: 0.2s; cursor: pointer; border: none;}
+    /* ปุ่ม Refresh GPS (Theme ฟ้า) */
+    .btn-get-loc { 
+      background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%); 
+      color: #2563eb; border: 1px solid #bfdbfe; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.1);
+      padding: 12px 20px; border-radius: 50px; font-size: 14px; font-weight: 700; cursor: pointer; margin: 0 auto 15px auto; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; 
+    }
+    .btn-get-loc:active { transform: scale(0.96); box-shadow: 0 2px 5px rgba(59, 130, 246, 0.05); }
+
+    /* ปุ่ม ถัดไป/ยืนยันข้อมูล (Theme เขียวเข้ม) */
+    .btn-verify { 
+      width: 100%; padding: 16px; 
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
+      color: white; border: none; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 10px; box-shadow: 0 6px 15px rgba(5, 150, 105, 0.25); transition: 0.2s; 
+    }
+    .btn-verify:active { transform: scale(0.98); box-shadow: 0 3px 8px rgba(5, 150, 105, 0.15); }
+    .btn-verify:disabled { background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%); cursor: not-allowed; box-shadow: none; color: #94a3b8; }
+
+    /* ปุ่ม สแกนใบหน้า (Theme น้ำเงิน) */
+    .btn-scan-face { 
+      width: 100%; padding: 16px; 
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); 
+      color: white; border: none; border-radius: 50px; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 6px 15px rgba(37, 99, 235, 0.25); transition: 0.2s;
+    }
+    .btn-scan-face:active:not(:disabled) { transform: scale(0.97); box-shadow: 0 3px 8px rgba(37, 99, 235, 0.15); }
+
+    /* ปุ่ม บันทึกด้วย GPS (Theme ส้ม) */
+    .btn-gps-fallback { 
+      width: 100%; padding: 14px; 
+      background: linear-gradient(135deg, #ffffff 0%, #fff7ed 100%); 
+      color: #ea580c; border: 1px solid #fed7aa; border-radius: 50px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; box-shadow: 0 4px 10px rgba(234, 88, 12, 0.08);
+    }
+    .btn-gps-fallback:active:not(:disabled) { transform: scale(0.97); box-shadow: 0 2px 5px rgba(234, 88, 12, 0.05); }
+
+    .btn-scan-face:disabled, .btn-gps-fallback:disabled { background: #f8fafc !important; color: #94a3b8 !important; border-color: #e2e8f0 !important; box-shadow: none !important; cursor: not-allowed; }
+
+    /* 🔴 [อัปเกรด] Theme เทา/เงิน สำหรับปุ่มกลับหน้าเมนู */
+    .btn-back { 
+      display: flex; align-items: center; justify-content: center; 
+      width: max-content; /* ปรับขนาดให้พอดีคำ ไม่ยาวจนเกินไป */
+      margin: 20px auto 30px auto; /* ขยับขึ้นมาต่อจากปุ่มด้านบน ไม่เด้งไปอยู่ล่างสุด */
+      padding: 12px 25px; 
+      font-size: 14px; font-weight: 700; 
+      border-radius: 50px; 
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); /* ไล่สีเทา/เงิน แบบหน้า admin */
+      color: #475569; 
+      border: 1px solid #e2e8f0; 
+      box-shadow: 0 6px 15px rgba(100, 116, 139, 0.12); /* เงาสวยงามตามแบบ */
+      text-decoration: none; transition: 0.2s; cursor: pointer; 
+    }
+    .btn-back:active { transform: scale(0.96); box-shadow: 0 3px 8px rgba(100, 116, 139, 0.08); }
 
     /* [จุดปรับแต่ง 5] กล้องวิดีโอ & Canvas (Sci-Fi Box) */
     .video-container { 
@@ -77,7 +116,7 @@
     /* [จุดปรับแต่ง 6] เลเยอร์แสดง % ความสำเร็จ */
     .success-visual {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(255, 255, 255, 0.85); /* 🔴 ปรับโปร่งแสงเพื่อให้เห็นกรอบบนหน้าตาค้างไว้ */
+      background: rgba(255, 255, 255, 0.85); 
       border-radius: 16px;
       display: none; flex-direction: column; align-items: center; justify-content: center;
       z-index: 20; animation: popInSuccess 0.5s ease-out;
@@ -319,7 +358,6 @@
       btn.disabled = true;
 
       try {
-         // 🔴 [ส่งข้อมูลไปหา GAS เพิ่มเติม เพื่อให้คำนวณวันแม่นยำขึ้น]
          const checkRes = await callGAS('checkDuplicateStatus', { 
             id: verifiedUser.id, 
             mode: currentMode, 
@@ -480,7 +518,6 @@
       const ctx = canvas.getContext('2d');
       const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.85 });
 
-      // 🔴 [จุดที่ปรับแก้] เอา delay ตอนเริ่มออก และ ปรับให้ทำงานเร็วขึ้นเป็น 200ms
       scanInterval = setInterval(async () => {
         if (video.paused || video.ended || isProcessing) return;
         
@@ -504,7 +541,7 @@
 
           if (bestMatch.distance < MATCH_THRESHOLD) {
             if (isProcessing) return; isProcessing = true;
-            clearInterval(scanInterval); video.pause(); // 🔴 ล็อคเฟรมวิดีโอค้างไว้
+            clearInterval(scanInterval); video.pause(); 
             
             let matchScore = Math.max(0, Math.round((1 - bestMatch.distance) * 100));
             let colorClass = "color-red";
@@ -518,7 +555,6 @@
             matchPercentEl.className = "match-percent " + colorClass; 
             
             overlayStatus.style.display = 'none';
-            // 🔴 [จุดที่ปรับแก้] ปล่อย Canvas (กรอบ) ไว้ไม่ต้องซ่อน และโชว์เปอร์เซ็นต์แบบโปร่งแสงทับไปเลย
             successVisual.style.display = 'flex'; 
             
             playSystemSound('success'); 
@@ -558,7 +594,6 @@
 
       try {
         if (currentMode === 'checkout') {
-          // 🔴 [ส่งข้อมูล Shift ไปพร้อมกับการบันทึกด้วย]
           await callGAS('logCheckOut', {name: user.name, lat: currentLat, lng: currentLng, method: method, id: user.id, shiftStart: user.shiftStart, shiftEnd: user.shiftEnd});
           showSuccess("บันทึกเวลาเลิกงานแล้ว");
         } else {
